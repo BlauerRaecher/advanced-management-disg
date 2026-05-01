@@ -3,458 +3,770 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>KI & DISG-Modell – Interaktives Dashboard</title>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<title>KI-Implementierung & Persönlichkeitsentwicklung: Der DISG-Simulator</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 
 :root{
-  --d:#e53935;--i:#f9a825;--s:#2e7d32;--g:#1565c0;
-  --bg:#f0f2f6;--card:#ffffff;--border:#e0e4ea;
-  --text:#1a1a2e;--muted:#6b7280;
-  --shadow:0 2px 14px rgba(0,0,0,0.09);
+  --bg:#0a0e1a;
+  --surface:#111827;
+  --surface2:#1c2333;
+  --border:#252e3f;
+  --border2:#2d3748;
+  --text:#e2e8f0;
+  --muted:#6b7a94;
+  --muted2:#8892a4;
+  --d:#e74c3c; --d-bg:rgba(231,76,60,.1); --d-glow:rgba(231,76,60,.25);
+  --i:#f1c40f; --i-bg:rgba(241,196,15,.1); --i-glow:rgba(241,196,15,.25);
+  --s:#2ecc71; --s-bg:rgba(46,204,113,.1); --s-glow:rgba(46,204,113,.25);
+  --g:#3498db; --g-bg:rgba(52,152,219,.1); --g-glow:rgba(52,152,219,.25);
+  --ok:#22c55e; --ok-bg:rgba(34,197,94,.1);
+  --err:#ef4444; --err-bg:rgba(239,68,68,.1);
+  --accent:#3b82f6;
+  --r:12px;
 }
 
-body{
-  font-family:'Inter',sans-serif;
-  background:var(--bg);
-  color:var(--text);
-  min-height:100vh;
-  padding:24px 20px;
-}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
 
-/* ── Header ─────────────────────────────── */
-header{text-align:center;margin-bottom:28px}
-header h1{font-size:1.45rem;font-weight:700;line-height:1.35;letter-spacing:-.02em}
-header h1 span{color:#3b82f6}
-header p{font-size:.8rem;color:var(--muted);margin-top:6px;font-weight:400}
-
-/* ── Layout ─────────────────────────────── */
-.dashboard{
-  display:grid;
-  grid-template-columns:300px 1fr;
-  grid-template-rows:auto auto;
-  gap:18px;
-  max-width:1200px;
-  margin:0 auto;
-}
-
-/* ── Cards ──────────────────────────────── */
-.card{
-  background:var(--card);
-  border-radius:14px;
-  border:1px solid var(--border);
-  box-shadow:var(--shadow);
-  padding:22px;
-}
-
-/* ── Control Panel ───────────────────────── */
-.control-panel{grid-row:1/3}
-
-.panel-title{
-  font-size:.72rem;font-weight:700;text-transform:uppercase;
-  letter-spacing:.1em;color:var(--muted);
-  margin-bottom:18px;padding-bottom:10px;
+/* ─── Header ──────────────────────────────────────────────── */
+.hd{
+  background:linear-gradient(180deg,#0d1220 0%,#0a0e1a 100%);
   border-bottom:1px solid var(--border);
+  padding:14px 40px;
+  display:flex;align-items:center;justify-content:space-between;
+  position:sticky;top:0;z-index:30;backdrop-filter:blur(10px);
+}
+.hd-left{display:flex;align-items:center;gap:12px}
+.hd-pill{
+  background:linear-gradient(135deg,var(--d),var(--i),var(--s),var(--g));
+  border-radius:7px;padding:5px 11px;
+  font-size:.68rem;font-weight:900;letter-spacing:.12em;color:#000;
+}
+.hd-title{font-size:.88rem;font-weight:600;color:var(--muted)}
+.hd-right{display:flex;align-items:center;gap:8px}
+.hd-tag{
+  font-size:.68rem;padding:4px 11px;border-radius:20px;
+  background:var(--surface2);border:1px solid var(--border2);
+  color:var(--muted);font-weight:500;
 }
 
-/* Scenario Cards */
-.scenario{
-  border:1.5px solid var(--border);
-  border-radius:10px;
-  padding:14px 16px;
-  margin-bottom:12px;
-  cursor:pointer;
-  transition:border-color .2s,background .2s,box-shadow .2s;
-  user-select:none;
+/* ─── Scenario Banner ─────────────────────────────────────── */
+.banner{
+  background:linear-gradient(135deg,#0d1520 0%,#0f1e35 50%,#0a1628 100%);
+  border-bottom:1px solid rgba(59,130,246,.2);
+  padding:32px 40px;text-align:center;
+  position:relative;overflow:hidden;
 }
-.scenario:hover{border-color:#94a3b8;background:#f8fafc;box-shadow:0 2px 8px rgba(0,0,0,.06)}
-.scenario.active{border-color:#3b82f6;background:#eff6ff}
-.scenario.active:hover{border-color:#2563eb}
-
-.scenario-header{display:flex;align-items:flex-start;gap:10px}
-.scenario-checkbox{
-  width:17px;height:17px;margin-top:2px;
-  accent-color:#3b82f6;flex-shrink:0;cursor:pointer;
-  pointer-events:none; /* handled by parent div */
+.banner::before{
+  content:'';position:absolute;inset:0;
+  background:radial-gradient(ellipse 60% 80% at 50% 120%,rgba(59,130,246,.08) 0%,transparent 70%);
+  pointer-events:none;
 }
-.scenario-title{font-size:.88rem;font-weight:600;line-height:1.35}
-.scenario-desc{font-size:.75rem;color:var(--muted);margin-top:7px;line-height:1.55}
-
-.effect-tags{display:flex;flex-wrap:wrap;gap:5px;margin-top:9px}
-.tag{font-size:.67rem;padding:2px 8px;border-radius:20px;font-weight:600}
-.tag-up{background:#dcfce7;color:#15803d}
-.tag-down{background:#fef2f2;color:#b91c1c}
-.tag-neutral{background:#f1f5f9;color:#475569}
-
-/* DISG Legend */
-.disg-legend{margin-top:18px;padding-top:16px;border-top:1px solid var(--border)}
-.disg-legend h3{
-  font-size:.7rem;font-weight:700;text-transform:uppercase;
-  letter-spacing:.1em;color:var(--muted);margin-bottom:10px;
+.banner-eye{
+  font-size:.68rem;font-weight:700;text-transform:uppercase;
+  letter-spacing:.16em;color:var(--accent);margin-bottom:10px;
+  display:flex;align-items:center;justify-content:center;gap:8px;
 }
-.legend-item{display:flex;align-items:center;gap:8px;margin-bottom:7px;font-size:.8rem}
-.leg-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
-.leg-key{font-weight:700}
-.leg-sub{color:var(--muted)}
-.leg-bar{width:22px;height:9px;border-radius:3px;flex-shrink:0}
+.banner-eye::before,.banner-eye::after{content:'';width:32px;height:1px;background:var(--accent);opacity:.5}
+.banner-h1{
+  font-size:1.5rem;font-weight:800;line-height:1.35;
+  max-width:720px;margin:0 auto 10px;letter-spacing:-.02em;
+}
+.banner-h1 em{
+  font-style:normal;
+  background:linear-gradient(90deg,#3b82f6,#06b6d4);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+}
+.banner-sub{font-size:.8rem;color:var(--muted);font-weight:400}
 
-/* ── Chart Area ─────────────────────────── */
-.chart-area{
+/* ─── Main ────────────────────────────────────────────────── */
+.main{max-width:1180px;margin:0 auto;padding:28px 32px}
+
+/* ─── Progress ────────────────────────────────────────────── */
+.prog{
+  display:flex;align-items:center;gap:16px;
+  padding:14px 20px;
+  background:var(--surface);border:1px solid var(--border);border-radius:var(--r);
+  margin-bottom:20px;
+}
+.prog-dots{display:flex;gap:8px}
+.prog-dot{
+  width:28px;height:28px;border-radius:50%;
+  background:var(--surface2);border:2px solid var(--border2);
   display:flex;align-items:center;justify-content:center;
-  min-height:380px;position:relative;
+  font-size:.7rem;font-weight:800;color:var(--muted);
+  transition:all .4s cubic-bezier(.34,1.56,.64,1);
 }
-.chart-area canvas{max-height:440px}
+.prog-dot.done{background:var(--ok);border-color:var(--ok);color:#fff;transform:scale(1.1)}
+.prog-sep{flex:1;height:2px;background:var(--border);border-radius:1px;position:relative;overflow:hidden}
+.prog-sep-fill{height:100%;background:linear-gradient(90deg,#3b82f6,#22c55e);border-radius:1px;transition:width .6s ease;width:0}
+.prog-label{font-size:.8rem;font-weight:600;color:var(--muted);white-space:nowrap}
+.prog-count{font-size:.8rem;font-weight:700;color:var(--text)}
 
-/* ── Interpretation ─────────────────────── */
-.interpretation{grid-column:2}
-
-.interpretation .panel-title{margin-bottom:14px}
-
-#interpretation-text{font-size:.85rem;line-height:1.75;color:var(--text)}
-#interpretation-text p{margin-bottom:10px}
-#interpretation-text p:last-child{margin-bottom:0}
-
-.no-scene{color:var(--muted);font-style:italic}
-.hl{font-weight:700}
-.hl-d{color:var(--d)}.hl-i{color:var(--i)}.hl-s{color:var(--s)}.hl-g{color:var(--g)}
-
-/* Value Cards */
-.value-grid{
-  display:grid;grid-template-columns:repeat(4,1fr);
-  gap:10px;margin-top:18px;padding-top:16px;
-  border-top:1px solid var(--border);
+/* ─── Instruction ──────────────────────────────────────────── */
+.instr{
+  display:flex;align-items:center;gap:10px;
+  padding:11px 16px;
+  background:rgba(59,130,246,.06);border:1px solid rgba(59,130,246,.2);
+  border-radius:9px;margin-bottom:28px;
+  font-size:.78rem;color:var(--muted2);line-height:1.5;
 }
-.vc{
-  text-align:center;padding:10px 6px;border-radius:9px;
-  background:var(--bg);position:relative;overflow:hidden;
+.instr strong{color:var(--text)}
+.instr-icon{font-size:1rem;flex-shrink:0}
+
+/* ─── Section Label ────────────────────────────────────────── */
+.sec-label{
+  font-size:.68rem;font-weight:700;text-transform:uppercase;
+  letter-spacing:.12em;color:var(--muted);
+  display:flex;align-items:center;gap:10px;margin-bottom:14px;
 }
-.vc-label{font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px}
-.vc-num{font-size:1.4rem;font-weight:800;line-height:1}
-.vc-delta{font-size:.7rem;font-weight:600;margin-top:3px;min-height:1em}
+.sec-label::after{content:'';flex:1;height:1px;background:var(--border)}
 
-.vc.vc-d .vc-label,.vc.vc-d .vc-num{color:var(--d)}
-.vc.vc-i .vc-label,.vc.vc-i .vc-num{color:var(--i)}
-.vc.vc-s .vc-label,.vc.vc-s .vc-num{color:var(--s)}
-.vc.vc-g .vc-label,.vc.vc-g .vc-num{color:var(--g)}
+/* ─── Actions Pool ─────────────────────────────────────────── */
+.pool{margin-bottom:30px}
+.actions-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
 
-.delta-up{color:#16a34a}.delta-dn{color:#dc2626}.delta-eq{color:var(--muted)}
+/* ─── Action Card ──────────────────────────────────────────── */
+.ac{
+  background:#ffffff;border:1.5px solid #e2e8f0;border-radius:var(--r);
+  padding:16px;cursor:grab;
+  transition:transform .2s,box-shadow .2s,border-color .2s,opacity .25s;
+  user-select:none;position:relative;overflow:hidden;
+}
+.ac::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:3px;
+  background:linear-gradient(90deg,#3b82f6,#06b6d4);
+  transform:scaleX(0);transform-origin:left;
+  transition:transform .2s;
+}
+.ac:hover{
+  transform:translateY(-3px);
+  box-shadow:0 12px 28px rgba(0,0,0,.15);
+  border-color:#bfdbfe;
+}
+.ac:hover::before{transform:scaleX(1)}
+.ac.selected{
+  border-color:#3b82f6;
+  box-shadow:0 0 0 3px rgba(59,130,246,.2), 0 8px 20px rgba(0,0,0,.12);
+}
+.ac.selected::before{transform:scaleX(1);background:linear-gradient(90deg,#2563eb,#3b82f6)}
+.ac.dragging{opacity:.45;cursor:grabbing;transform:scale(.97)}
+.ac.gone{opacity:.2;pointer-events:none;cursor:default;transform:scale(.97)}
 
-/* ── Responsive ────────────────────────── */
-@media(max-width:780px){
-  body{padding:14px 12px}
-  header h1{font-size:1.1rem}
-  .dashboard{grid-template-columns:1fr;grid-template-rows:auto}
-  .control-panel{grid-row:auto}
-  .interpretation{grid-column:1}
-  .value-grid{grid-template-columns:repeat(2,1fr)}
+.ac-badge{
+  font-size:.62rem;font-weight:700;text-transform:uppercase;
+  letter-spacing:.1em;color:#3b82f6;margin-bottom:8px;
+  display:flex;align-items:center;gap:5px;
+}
+.ac-badge::before{content:'';width:5px;height:5px;background:#3b82f6;border-radius:50%}
+.ac-title{font-size:.82rem;font-weight:800;color:#1e293b;margin-bottom:5px;line-height:1.3}
+.ac-desc{font-size:.73rem;color:#64748b;line-height:1.5}
+.ac-grip{position:absolute;top:10px;right:10px;color:#cbd5e1;font-size:.75rem;opacity:.7}
+
+/* ─── Employees Grid ────────────────────────────────────────── */
+.emp-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:24px}
+
+/* ─── Employee Card ─────────────────────────────────────────── */
+.ec{
+  border-radius:var(--r);border:1.5px solid var(--border);
+  background:var(--surface);overflow:hidden;
+  transition:border-color .2s,box-shadow .2s,transform .2s;
+}
+.ec[data-t="D"]{--ec:var(--d);--ec-bg:var(--d-bg);--ec-glow:var(--d-glow)}
+.ec[data-t="I"]{--ec:var(--i);--ec-bg:var(--i-bg);--ec-glow:var(--i-glow)}
+.ec[data-t="S"]{--ec:var(--s);--ec-bg:var(--s-bg);--ec-glow:var(--s-glow)}
+.ec[data-t="G"]{--ec:var(--g);--ec-bg:var(--g-bg);--ec-glow:var(--g-glow)}
+
+.ec.ready{
+  border-color:var(--ec);cursor:pointer;
+  box-shadow:0 0 0 1px var(--ec-glow),0 4px 16px rgba(0,0,0,.3);
+  animation:pulseReady 2s ease-in-out infinite;
+}
+.ec.dz-over{transform:scale(1.02);box-shadow:0 0 0 3px var(--ec-glow),0 8px 24px rgba(0,0,0,.4)}
+.ec.pop{animation:popCorrect .5s cubic-bezier(.34,1.56,.64,1)}
+.ec.shake{animation:doShake .45s ease}
+.ec.done{border-color:var(--ok)}
+
+/* Employee Header */
+.ec-head{
+  background:var(--ec-bg);
+  border-bottom:1px solid rgba(255,255,255,.06);
+  padding:16px;display:flex;align-items:center;gap:12px;
+}
+.ec-av{
+  width:46px;height:46px;border-radius:50%;background:var(--ec);
+  display:flex;align-items:center;justify-content:center;
+  font-size:1.1rem;font-weight:900;color:#000;
+  flex-shrink:0;box-shadow:0 2px 8px rgba(0,0,0,.35);
+  position:relative;
+}
+.ec-av-check{
+  display:none;position:absolute;inset:0;border-radius:50%;
+  background:var(--ok);align-items:center;justify-content:center;
+  font-size:.9rem;color:#fff;
+}
+.ec.done .ec-av-check{display:flex}
+.ec-name{font-size:.84rem;font-weight:700;color:var(--text);margin-bottom:1px}
+.ec-role{font-size:.68rem;color:var(--muted);font-weight:500;margin-bottom:2px}
+.ec-type{font-size:.68rem;font-weight:700;color:var(--ec);text-transform:uppercase;letter-spacing:.08em}
+
+/* Employee Body */
+.ec-body{padding:13px 15px}
+.ec-status{
+  font-size:.73rem;color:var(--muted2);line-height:1.55;
+  font-style:italic;margin-bottom:12px;
+  padding-bottom:10px;border-bottom:1px solid var(--border);
+}
+
+/* Drop Zone */
+.dz{
+  border:1.5px dashed var(--border2);border-radius:9px;
+  padding:12px;min-height:72px;
+  display:flex;align-items:center;justify-content:center;
+  transition:all .2s;background:var(--surface2);
+  cursor:pointer;
+}
+.dz:hover{border-color:var(--ec);background:var(--ec-bg)}
+.ec.ready .dz{border-color:var(--ec);background:var(--ec-bg)}
+.dz.dz-active{border-color:var(--ec);background:var(--ec-bg)}
+.dz.dz-filled{
+  border-style:solid;border-color:var(--ok);background:var(--ok-bg);
+  cursor:default;
+}
+.dz-ph{display:flex;flex-direction:column;align-items:center;gap:4px;opacity:.55}
+.dz-ph-icon{font-size:1.3rem}
+.dz-ph-txt{font-size:.68rem;color:var(--muted)}
+.ec.ready .dz-ph,.ec.ready .dz:hover .dz-ph{opacity:.9;color:var(--ec)}
+
+.dz-result{}
+.dz-r-head{
+  display:flex;align-items:center;gap:6px;
+  font-size:.73rem;font-weight:800;color:var(--ok);margin-bottom:5px;
+}
+.dz-r-head::before{content:'✓';font-size:.8rem}
+.dz-r-title{color:var(--ok)}
+.dz-r-text{font-size:.7rem;color:var(--muted2);line-height:1.55}
+
+/* ─── Feedback ──────────────────────────────────────────────── */
+.fb{
+  border-radius:var(--r);border:1px solid var(--border);
+  background:var(--surface);padding:15px 20px;
+  display:flex;align-items:flex-start;gap:13px;
+  transition:all .3s;
+  opacity:0;transform:translateY(8px);pointer-events:none;
+  margin-bottom:10px;
+}
+.fb.show{opacity:1;transform:translateY(0);pointer-events:auto}
+.fb.fb-ok{border-color:var(--ok);background:var(--ok-bg)}
+.fb.fb-err{border-color:var(--err);background:var(--err-bg)}
+.fb-ico{font-size:1.5rem;flex-shrink:0;margin-top:1px}
+.fb-body{}
+.fb-ttl{font-size:.82rem;font-weight:800;margin-bottom:3px}
+.fb.fb-ok .fb-ttl{color:#4ade80}
+.fb.fb-err .fb-ttl{color:#f87171}
+.fb-msg{font-size:.76rem;color:var(--muted2);line-height:1.6}
+
+/* ─── Success Overlay ───────────────────────────────────────── */
+.success{
+  display:none;position:fixed;inset:0;z-index:50;
+  background:rgba(10,14,26,.92);backdrop-filter:blur(12px);
+  align-items:center;justify-content:center;padding:24px;
+}
+.success.show{display:flex;animation:fadeIn .4s ease}
+
+.succ-modal{
+  background:var(--surface);border:1px solid rgba(34,197,94,.4);
+  border-radius:20px;padding:40px 44px;
+  max-width:680px;width:100%;text-align:center;
+  box-shadow:0 0 80px rgba(34,197,94,.15),0 40px 80px rgba(0,0,0,.6);
+  animation:scaleUp .5s cubic-bezier(.34,1.56,.64,1);
+  max-height:90vh;overflow-y:auto;
+}
+.succ-icon{font-size:3.5rem;display:block;margin-bottom:16px;animation:spinIn .6s ease .2s both}
+.succ-h1{font-size:2rem;font-weight:900;letter-spacing:-.03em;margin-bottom:6px}
+.succ-h1 span{background:linear-gradient(90deg,#22c55e,#06b6d4);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.succ-sub{font-size:.88rem;color:var(--muted2);margin-bottom:28px;line-height:1.6}
+
+.succ-stats{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:24px;text-align:left}
+.ss{background:var(--surface2);border:1px solid var(--border2);border-radius:10px;padding:14px 16px}
+.ss-lbl{font-size:.62rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:4px}
+.ss-val{font-size:.85rem;font-weight:700;color:var(--text);line-height:1.4}
+
+.succ-impl{
+  background:rgba(59,130,246,.07);border:1px solid rgba(59,130,246,.25);
+  border-radius:11px;padding:18px;text-align:left;margin-bottom:24px;
+}
+.succ-impl-lbl{
+  font-size:.62rem;font-weight:700;text-transform:uppercase;letter-spacing:.12em;
+  color:var(--accent);margin-bottom:8px;
+}
+.succ-impl-text{font-size:.8rem;color:var(--muted2);line-height:1.75}
+.succ-impl-text strong{color:var(--text)}
+
+.succ-results{margin-bottom:24px;text-align:left}
+.succ-res-lbl{
+  font-size:.62rem;font-weight:700;text-transform:uppercase;letter-spacing:.12em;
+  color:var(--muted);margin-bottom:10px;
+}
+.res-row{
+  display:flex;align-items:flex-start;gap:10px;
+  padding:10px 0;border-bottom:1px solid var(--border);
+}
+.res-row:last-child{border-bottom:none}
+.res-dot{
+  width:8px;height:8px;border-radius:50%;flex-shrink:0;margin-top:5px;
+}
+.res-name{font-size:.75rem;font-weight:700;color:var(--text);margin-bottom:2px}
+.res-text{font-size:.72rem;color:var(--muted2);line-height:1.5}
+
+.reset-btn{
+  background:var(--surface2);border:1.5px solid var(--border2);
+  border-radius:10px;padding:12px 32px;
+  color:var(--text);font-family:'Inter',sans-serif;
+  font-size:.85rem;font-weight:700;cursor:pointer;
+  transition:all .2s;
+}
+.reset-btn:hover{border-color:var(--accent);background:rgba(59,130,246,.1);color:var(--accent)}
+
+/* ─── Keyframes ─────────────────────────────────────────────── */
+@keyframes pulseReady{
+  0%,100%{box-shadow:0 0 0 1px var(--ec-glow),0 4px 12px rgba(0,0,0,.25)}
+  50%{box-shadow:0 0 0 3px var(--ec-glow),0 6px 20px rgba(0,0,0,.35)}
+}
+@keyframes popCorrect{
+  0%{transform:scale(1)}40%{transform:scale(1.05)}70%{transform:scale(.98)}100%{transform:scale(1)}
+}
+@keyframes doShake{
+  0%,100%{transform:translateX(0)}
+  15%{transform:translateX(-7px)}
+  30%{transform:translateX(7px)}
+  45%{transform:translateX(-5px)}
+  60%{transform:translateX(5px)}
+  75%{transform:translateX(-3px)}
+  90%{transform:translateX(3px)}
+}
+@keyframes acWrongFlash{
+  0%,100%{border-color:#e2e8f0;background:#fff}
+  30%{border-color:#f87171;background:#fef2f2}
+  70%{border-color:#fca5a5;background:#fff5f5}
+}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@keyframes scaleUp{from{opacity:0;transform:scale(.88)}to{opacity:1;transform:scale(1)}}
+@keyframes spinIn{from{transform:rotate(-20deg) scale(.5);opacity:0}to{transform:rotate(0) scale(1);opacity:1}}
+
+/* ─── Utilities ─────────────────────────────────────────────── */
+.ac.wrong-flash{animation:acWrongFlash .55s ease}
+
+/* ─── Responsive ────────────────────────────────────────────── */
+@media(max-width:960px){
+  .main{padding:20px}
+  .actions-grid{grid-template-columns:repeat(2,1fr)}
+  .emp-grid{grid-template-columns:repeat(2,1fr)}
+  .hd{padding:12px 20px}
+  .banner{padding:22px 20px}
+  .banner-h1{font-size:1.15rem}
+}
+@media(max-width:560px){
+  .actions-grid{grid-template-columns:1fr}
+  .emp-grid{grid-template-columns:1fr}
+  .succ-stats{grid-template-columns:1fr}
+  .prog-label{display:none}
 }
 </style>
 </head>
 <body>
 
-<header>
-  <h1>Auswirkungen von <span>Künstlicher Intelligenz</span> auf die persönliche Weiterentwicklung</h1>
-  <p>nach dem DISG-Modell · Interaktives Analyse-Dashboard · Wissenschaftliche Hausarbeit</p>
+<!-- ── Header ───────────────────────────────────────────────── -->
+<header class="hd">
+  <div class="hd-left">
+    <div class="hd-pill">DISG</div>
+    <span class="hd-title">Management-Simulator</span>
+  </div>
+  <div class="hd-right">
+    <span class="hd-tag">E-Learning</span>
+    <span class="hd-tag">Advanced Management</span>
+  </div>
 </header>
 
-<div class="dashboard">
+<!-- ── Scenario Banner ──────────────────────────────────────── -->
+<div class="banner">
+  <div class="banner-eye">Aktives Szenario</div>
+  <h1 class="banner-h1">Einführung einer unternehmensweiten <em>Generativen KI</em> zur Effizienzsteigerung</h1>
+  <p class="banner-sub">Ordne jeder Persönlichkeit die psychologisch richtige Management-Maßnahme zu</p>
+</div>
 
-  <!-- ── Control Panel ─────────────────── -->
-  <div class="card control-panel">
-    <div class="panel-title">KI-Szenarien aktivieren</div>
+<!-- ── Main ─────────────────────────────────────────────────── -->
+<main class="main">
 
-    <div class="scenario" id="scen-generative">
-      <div class="scenario-header">
-        <input type="checkbox" class="scenario-checkbox" id="cb-generative">
-        <span class="scenario-title">Generative KI</span>
-      </div>
-      <p class="scenario-desc">LLMs &amp; kreative KI-Tools als kognitive Assistenten (ChatGPT, Claude, Copilot). Beschleunigen Ideation und Entscheidungszyklen.</p>
-      <div class="effect-tags">
-        <span class="tag tag-up">↑ Dominanz +15</span>
-        <span class="tag tag-up">↑ Initiative +20</span>
-        <span class="tag tag-down">↓ G-Routine −10</span>
-      </div>
+  <!-- Progress -->
+  <div class="prog">
+    <div class="prog-dots" id="prog-dots">
+      <div class="prog-dot" id="pd-D">D</div>
+      <div class="prog-dot" id="pd-I">I</div>
+      <div class="prog-dot" id="pd-S">S</div>
+      <div class="prog-dot" id="pd-G">G</div>
     </div>
+    <div class="prog-sep"><div class="prog-sep-fill" id="prog-fill"></div></div>
+    <span class="prog-label">Korrekte Zuordnungen</span>
+    <span class="prog-count" id="prog-count">0 / 4</span>
+  </div>
 
-    <div class="scenario" id="scen-automatisierung">
-      <div class="scenario-header">
-        <input type="checkbox" class="scenario-checkbox" id="cb-automatisierung">
-        <span class="scenario-title">Prozess-Automatisierung</span>
-      </div>
-      <p class="scenario-desc">RPA, intelligente Agenten &amp; Workflow-KI übernehmen repetitive Aufgaben und skalieren Zuverlässigkeit auf strategischer Ebene.</p>
-      <div class="effect-tags">
-        <span class="tag tag-up">↑ Dominanz +10</span>
-        <span class="tag tag-up">↑ Stetigkeit +15</span>
-        <span class="tag tag-neutral">→ Initiative +5</span>
-      </div>
-    </div>
+  <!-- Instruction -->
+  <div class="instr">
+    <span class="instr-icon">💡</span>
+    <span><strong>So geht's:</strong> Klicke eine <strong>Maßnahme</strong> an (sie leuchtet blau), dann klicke auf den passenden <strong>Mitarbeiter</strong> — oder ziehe die Karte direkt per Drag-and-Drop. Falsche Zuordnungen geben sofortiges Feedback.</span>
+  </div>
 
-    <div class="scenario" id="scen-analytik">
-      <div class="scenario-header">
-        <input type="checkbox" class="scenario-checkbox" id="cb-analytik">
-        <span class="scenario-title">KI-gestützte Analytik</span>
-      </div>
-      <p class="scenario-desc">Predictive Analytics &amp; BI-Dashboards ermöglichen datengetriebene Entscheidungen — G-Typen werden zu System-Validierern.</p>
-      <div class="effect-tags">
-        <span class="tag tag-up">↑↑ Gewissenhaftigkeit +25</span>
-        <span class="tag tag-up">↑ Dominanz +5</span>
-      </div>
-    </div>
+  <!-- Action Pool -->
+  <div class="pool">
+    <div class="sec-label">Verfügbare Management-Maßnahmen (wähle aus)</div>
+    <div class="actions-grid" id="actions-grid"></div>
+  </div>
 
-    <!-- DISG Legend -->
-    <div class="disg-legend">
-      <h3>DISG-Achsen</h3>
-      <div class="legend-item"><div class="leg-dot" style="background:var(--d)"></div><span class="leg-key" style="color:var(--d)">D</span><span class="leg-sub">– Dominanz</span></div>
-      <div class="legend-item"><div class="leg-dot" style="background:var(--i)"></div><span class="leg-key" style="color:var(--i)">I</span><span class="leg-sub">– Initiative</span></div>
-      <div class="legend-item"><div class="leg-dot" style="background:var(--s)"></div><span class="leg-key" style="color:var(--s)">S</span><span class="leg-sub">– Stetigkeit</span></div>
-      <div class="legend-item"><div class="leg-dot" style="background:var(--g)"></div><span class="leg-key" style="color:var(--g)">G</span><span class="leg-sub">– Gewissenhaftigkeit</span></div>
-      <div style="margin-top:12px;padding-top:10px;border-top:1px solid var(--border)">
-        <div class="legend-item"><div class="leg-bar" style="background:rgba(150,150,150,.25);border:1.5px solid rgba(120,120,120,.55)"></div><span style="font-size:.76rem;color:var(--muted)">Status Quo (ohne KI)</span></div>
-        <div class="legend-item"><div class="leg-bar" style="background:rgba(59,130,246,.25);border:1.5px solid #3b82f6"></div><span style="font-size:.76rem;color:var(--muted)">Entwicklungspotenzial (mit KI)</span></div>
-      </div>
+  <!-- Employee Cards -->
+  <div>
+    <div class="sec-label">Dein Team — weise jeder Person eine Maßnahme zu</div>
+    <div class="emp-grid" id="emp-grid"></div>
+  </div>
+
+  <!-- Feedback -->
+  <div class="fb" id="fb">
+    <span class="fb-ico" id="fb-ico"></span>
+    <div class="fb-body">
+      <div class="fb-ttl" id="fb-ttl"></div>
+      <div class="fb-msg" id="fb-msg"></div>
     </div>
   </div>
 
-  <!-- ── Radar Chart ────────────────────── -->
-  <div class="card chart-area">
-    <canvas id="disgChart"></canvas>
-  </div>
+</main>
 
-  <!-- ── Interpretation ────────────────── -->
-  <div class="card interpretation">
-    <div class="panel-title">Management-Interpretation</div>
-    <div id="interpretation-text">
-      <p class="no-scene">Wähle ein oder mehrere KI-Szenarien im Kontrollpanel, um eine detaillierte Analyse der Auswirkungen auf die DISG-Persönlichkeitsstruktur zu erhalten.</p>
-    </div>
-    <div class="value-grid">
-      <div class="vc vc-d"><div class="vc-label">Dominanz</div><div class="vc-num" id="vn-d">55</div><div class="vc-delta delta-eq" id="vd-d">—</div></div>
-      <div class="vc vc-i"><div class="vc-label">Initiative</div><div class="vc-num" id="vn-i">60</div><div class="vc-delta delta-eq" id="vd-i">—</div></div>
-      <div class="vc vc-s"><div class="vc-label">Stetigkeit</div><div class="vc-num" id="vn-s">65</div><div class="vc-delta delta-eq" id="vd-s">—</div></div>
-      <div class="vc vc-g"><div class="vc-label">Gewissenh.</div><div class="vc-num" id="vn-g">70</div><div class="vc-delta delta-eq" id="vd-g">—</div></div>
-    </div>
-  </div>
+<!-- ── Success Overlay ───────────────────────────────────────── -->
+<div class="success" id="success">
+  <div class="succ-modal">
+    <span class="succ-icon">🏆</span>
+    <h2 class="succ-h1"><span>Transformation geglückt!</span></h2>
+    <p class="succ-sub">100 % Mitarbeiter-Akzeptanz erreicht — alle vier DISG-Typen wurden optimal in die KI-Einführung integriert.</p>
 
+    <div class="succ-stats">
+      <div class="ss"><div class="ss-lbl">Mitarbeiter-Akzeptanz</div><div class="ss-val">100 % — alle 4 DISG-Typen</div></div>
+      <div class="ss"><div class="ss-lbl">Erwarteter Produktivitäts-Gain</div><div class="ss-val">+34 % im ersten Quartal</div></div>
+      <div class="ss"><div class="ss-lbl">Change-Strategie</div><div class="ss-val">Persönlichkeitssensitiv & individuell</div></div>
+      <div class="ss"><div class="ss-lbl">Widerstandspotenzial</div><div class="ss-val">Auf 0 % minimiert</div></div>
+    </div>
+
+    <div class="succ-results">
+      <div class="succ-res-lbl">Entwicklungsergebnisse im Überblick</div>
+      <div id="succ-res-rows"></div>
+    </div>
+
+    <div class="succ-impl">
+      <div class="succ-impl-lbl">Implikationen für das Advanced Management</div>
+      <p class="succ-impl-text">
+        Eine erfolgreiche KI-Transformation erfordert keine einheitliche Strategie, sondern <strong>persönlichkeitssensitives Change-Management</strong>. Indem Maßnahmen konsequent auf individuelle DISG-Profile abgestimmt werden, verwandelt sich potenzielle <strong>Skepsis in Kompetenz</strong>, Widerstand in Leadership und Überforderung in Prozessexzellenz. Das Ergebnis geht weit über Effizienzgewinne hinaus: Jeder Mitarbeitertyp erlebt <strong>echte persönliche Weiterentwicklung</strong> — und wird zum aktiven Treiber der digitalen Transformation.
+      </p>
+    </div>
+
+    <button class="reset-btn" onclick="resetGame()">↩ Simulation neu starten</button>
+  </div>
 </div>
 
 <script>
-// ─────────────────────────────────────────────
-// Constants & State
-// ─────────────────────────────────────────────
-const BASE = { D: 55, I: 60, S: 65, G: 70 };
-
-const DELTAS = {
-  generative:     { D: +15, I: +20, S:  +5, G: -10 },
-  automatisierung:{ D: +10, I:  +5, S: +15, G:  +5 },
-  analytik:       { D:  +5, I:  +5, S:  +5, G: +25 }
-};
-
-const AXIS_INFO = {
-  D: 'Dominanz: Vom reaktiven Entscheider zum KI-gestützten Strategen – Entscheidungsqualität steigt durch Echtzeit-Daten und automatisierte Szenario-Analysen.',
-  I: 'Initiative: Generative KI als Kreativpartner – mehr Ideen, schnellere Prototypen und gesteigerter Ideenfluss durch LLM-Unterstützung.',
-  S: 'Stetigkeit: Vom Routine-Ausführer zum Prozess-Architekten – Zuverlässigkeit wird durch KI skaliert und auf strategischer Ebene gefordert.',
-  G: 'Gewissenhaftigkeit: Vom Detail-Prüfer zum System-Validierer – KI-Outputs evaluieren und auf Konsistenz & Bias prüfen statt manuell zu recherchieren.'
-};
-
-const TEXTS = {
-  none: `<p class="no-scene">Wähle ein oder mehrere KI-Szenarien im Kontrollpanel, um eine detaillierte Analyse der Auswirkungen auf die DISG-Persönlichkeitsstruktur zu erhalten.</p>`,
-
-  generative: `<p>Der Einsatz <strong>Generativer KI</strong> wirkt als kognitiver Verstärker, der vor allem die <span class="hl hl-i">Initiative</span> (kreatives Denken, Ideengenerierung +20 Punkte) und die <span class="hl hl-d">Dominanz</span> (schnelle, datengestützte Entscheidungen +15 Punkte) signifikant stärkt.</p>
-  <p>Gleichzeitig sinkt der Druck auf manuelle <span class="hl hl-g">Gewissenhaftigkeit</span> bei Routinerecherchen (−10 Punkte) – der G-Typ wandelt sich vom <em>Detail-Prüfer</em> zum <em>Prompt-Strategen</em>, der KI-Outputs kritisch bewertet statt selbst zu analysieren.</p>
-  <p><strong>Kernbotschaft:</strong> Führungskräfte mit hohem I-Profil werden durch generative KI exponentiell produktiver. D-Typen profitieren massiv von der Beschleunigung ihrer Entscheidungszyklen.</p>`,
-
-  automatisierung: `<p><strong>Prozessautomatisierung</strong> befreit die <span class="hl hl-s">Stetigkeit</span> von repetitiven Aufgaben (+15 Punkte) und erhöht zugleich die Anforderungen an die <span class="hl hl-d">Dominanz</span> (+10 Punkte): Wer KI-Systeme steuert und verantwortet, braucht Durchsetzungsvermögen und strategische Kontrolle.</p>
-  <p>S-Typen profitieren besonders: Ihre Zuverlässigkeit wird nun auf strategischer Ebene gefordert – nicht mehr als Ausführende von Routine, sondern als <em>Hüter der Prozessqualität</em> in automatisierten Systemen.</p>
-  <p><strong>Kernbotschaft:</strong> Automatisierung verschiebt den Fokus von Ausführung zu Kontrolle. D-Kompetenzen werden zur Schlüsselqualifikation im KI-Zeitalter – der Mensch führt die Maschine.</p>`,
-
-  analytik: `<p><strong>KI-gestützte Analytik</strong> erzeugt den stärksten Push auf die <span class="hl hl-g">Gewissenhaftigkeit</span> (+25 Punkte): Die Rolle des G-Typs transformiert sich fundamental – vom manuellen <em>Datensammler</em> zum <em>System-Validierer</em>, der KI-Modelle auf Konsistenz, Bias und Übertragbarkeit prüft.</p>
-  <p>Präzision und strukturiertes Denken werden nicht überflüssig – sie steigen im Wert. Auch die <span class="hl hl-d">Dominanz</span> wächst (+5), da datengetriebene Entscheidungen durch Analytics-Insights mit größerer Sicherheit getroffen werden.</p>
-  <p><strong>Kernbotschaft:</strong> G-Typen sind die Gewinner der Analytics-Revolution – vorausgesetzt, sie sind bereit, ihre Stärken von der Datenpflege zur Modellbewertung weiterzuentwickeln.</p>`,
-
-  generative_automatisierung: `<p>Die Kombination aus <strong>Generativer KI</strong> und <strong>Automatisierung</strong> formt den <em>autonomen Wissensstrategen</em>: Die <span class="hl hl-d">Dominanz</span> erreicht mit +25 Punkten ein Maximum – Entscheidungsgeschwindigkeit und KI-Steuerungskompetenz greifen synergetisch ineinander.</p>
-  <p><span class="hl hl-i">Initiative</span> (+25) und <span class="hl hl-s">Stetigkeit</span> (+20) wachsen gemeinsam – Kreativität trifft auf skalierbare Zuverlässigkeit. Dies beschreibt das Profil eines modernen <em>Digital Leaders</em>.</p>
-  <p><strong>Kernbotschaft:</strong> Wer beide Technologien beherrscht, entwickelt eine seltene Balance aus Agilität (I) und Kontrolle (D/S) – ein hochgefragtes Führungsprofil für die digitale Transformation.</p>`,
-
-  generative_analytik: `<p><strong>Generative KI</strong> und <strong>Analytik</strong> verstärken sich gegenseitig auf wissenschaftlich produktive Weise: Die <span class="hl hl-i">Initiative</span> liefert kreative Hypothesen (+25), die <span class="hl hl-g">Gewissenhaftigkeit</span> validiert sie datengestützt (+15). Das Ergebnis ist der <em>datengetriebene Innovator</em>.</p>
-  <p>Der <span class="hl hl-d">Dominanz</span>-Anstieg (+20) zeigt: Wer KI kreativ und analytisch nutzt, trifft Entscheidungen mit ungleich höherer Qualität – und kann diese überzeugend nach außen vertreten.</p>
-  <p><strong>Kernbotschaft:</strong> I + G ist das klassische Profil von Visionären, die KI nutzen, um Ideen nicht nur zu generieren, sondern auch quantitativ zu beweisen. Eine zentrale Kompetenz für Innovations-Teams.</p>`,
-
-  automatisierung_analytik: `<p><strong>Automatisierung</strong> und <strong>Analytik</strong> gemeinsam stärken besonders die <span class="hl hl-g">Gewissenhaftigkeit</span> (+30) und die <span class="hl hl-d">Dominanz</span> (+15): Prozesse laufen selbstständig, während KI-Dashboards permanente, datenbasierte Entscheidungsunterstützung bieten.</p>
-  <p><span class="hl hl-s">Stetigkeit</span> erreicht +20 Punkte – die Zuverlässigkeit des S-Typs wird durch automatisierte Systeme skaliert und durch Analytics-Insights mit strategischer Substanz gefüllt.</p>
-  <p><strong>Kernbotschaft:</strong> Das Profil des <em>Operational Intelligence Leaders</em> – systematisch, präzise und mit vollständigem Überblick über automatisierte Prozesse. Ideal für COOs und Heads of Operations.</p>`,
-
-  all: `<p>Mit allen drei KI-Szenarien entsteht das Profil des <strong>vollständig KI-augmentierten Managers</strong>: Alle vier DISG-Dimensionen wachsen signifikant – mit besonderem Schwerpunkt auf <span class="hl hl-g">Gewissenhaftigkeit</span> (+20) und <span class="hl hl-d">Dominanz</span> (+30).</p>
-  <p>Diese Kombination beschreibt die <em>Führungskraft der Zukunft</em>: kreativ durch Generative KI, effizient durch Automatisierung, präzise durch Analytik – und entscheidungsfreudig durch das Zusammenspiel aller drei Fähigkeiten. Die <span class="hl hl-i">Initiative</span> steigt um +30, <span class="hl hl-s">Stetigkeit</span> um +25.</p>
-  <p><strong>Kernbotschaft:</strong> KI demokratisiert Spitzenleistung. Wer alle drei Szenarien strategisch integriert, hebt sein DISG-Profil auf ein Niveau, das früher nur Ausnahmetalenten vorbehalten war.</p>
-  <p style="font-size:.77rem;color:var(--muted);margin-top:8px;padding:8px 12px;background:#fefce8;border-radius:6px;border-left:3px solid #f9a825">⚠ Diese Entwicklung erfordert aktive Kompetenzentwicklung – KI verstärkt vorhandene Stärken, ersetzt aber nicht strategisches Denken und soziale Intelligenz.</p>`
-};
-
-const active = new Set();
-
-// ─────────────────────────────────────────────
-// Chart.js Setup
-// ─────────────────────────────────────────────
-const ctx = document.getElementById('disgChart').getContext('2d');
-
-const chart = new Chart(ctx, {
-  type: 'radar',
-  data: {
-    labels: ['Dominanz (D)', 'Initiative (I)', 'Stetigkeit (S)', 'Gewissenhaftigkeit (G)'],
-    datasets: [
-      {
-        label: 'Status Quo (ohne KI)',
-        data: [BASE.D, BASE.I, BASE.S, BASE.G],
-        backgroundColor: 'rgba(148,163,184,.2)',
-        borderColor: 'rgba(100,116,139,.65)',
-        borderWidth: 2,
-        pointBackgroundColor: 'rgba(100,116,139,.7)',
-        pointBorderColor: '#fff',
-        pointRadius: 5,
-        pointHoverRadius: 7,
-      },
-      {
-        label: 'Entwicklungspotenzial (mit KI)',
-        data: [BASE.D, BASE.I, BASE.S, BASE.G],
-        backgroundColor: 'rgba(59,130,246,.18)',
-        borderColor: 'rgba(59,130,246,.85)',
-        borderWidth: 2.5,
-        pointBackgroundColor: ['#e53935','#f9a825','#2e7d32','#1565c0'],
-        pointBorderColor: '#fff',
-        pointHoverBackgroundColor: '#fff',
-        pointHoverBorderColor: ['#e53935','#f9a825','#2e7d32','#1565c0'],
-        pointRadius: 6,
-        pointHoverRadius: 9,
-      }
-    ]
+/* ═══════════════════════════════════════════════════════════════
+   DATA
+═══════════════════════════════════════════════════════════════ */
+const ACTIONS = [
+  {
+    id:'a-d', title:'Pilotprojekt-Verantwortung',
+    desc:'Verantwortung für das KI-Pilotprojekt übertragen & Fokus auf messbaren ROI-Steigerung setzen.',
+    target:'D'
   },
-  options: {
-    responsive: true,
-    maintainAspectRatio: true,
-    animation: { duration: 550, easing: 'easeInOutQuart' },
-    scales: {
-      r: {
-        min: 0, max: 100,
-        ticks: {
-          stepSize: 25,
-          font: { size: 10, family: 'Inter' },
-          color: '#94a3b8',
-          backdropColor: 'transparent'
-        },
-        grid: { color: 'rgba(0,0,0,.07)' },
-        angleLines: { color: 'rgba(0,0,0,.1)' },
-        pointLabels: {
-          font: { size: 13, weight: '700', family: 'Inter' },
-          color: (c) => ['#e53935','#f9a825','#2e7d32','#1565c0'][c.index],
-          padding: 12
-        }
-      }
-    },
-    plugins: {
-      legend: {
-        position: 'bottom',
-        labels: {
-          font: { size: 11.5, family: 'Inter' },
-          padding: 20,
-          usePointStyle: true,
-          pointStyleWidth: 13
-        }
-      },
-      tooltip: {
-        backgroundColor: 'rgba(15,23,42,.92)',
-        titleFont: { size: 13, weight: '700', family: 'Inter' },
-        bodyFont: { size: 11, family: 'Inter' },
-        padding: 14, cornerRadius: 9, boxPadding: 5,
-        callbacks: {
-          title: (items) => ['Dominanz (D)','Initiative (I)','Stetigkeit (S)','Gewissenhaftigkeit (G)'][items[0].dataIndex],
-          label: (item) => `  ${item.dataset.label}: ${item.raw} / 100`,
-          afterBody: (items) => {
-            const key = ['D','I','S','G'][items[0].dataIndex];
-            return ['\n' + AXIS_INFO[key]];
-          }
-        }
-      }
-    }
-  }
-});
+  {
+    id:'a-i', title:'KI-Kreativ-Förderung',
+    desc:'KI als Werkzeug für Brainstorming & kreative Prototypen einsetzen — Ideengeneration ohne Limits.',
+    target:'I'
+  },
+  {
+    id:'a-s', title:'Schrittweise Einführung',
+    desc:'Schrittweise Einführung mit persönlichem Mentor & klarer Botschaft: KI sichert Arbeitsplätze.',
+    target:'S'
+  },
+  {
+    id:'a-g', title:'Quality-Auditor-Rolle',
+    desc:'Neue Rolle als „KI Quality-Auditor" definieren: Outputs validieren statt blind übernehmen.',
+    target:'G'
+  },
+  {
+    id:'a-x1', title:'Strikte Prompt-Kontrolle',
+    desc:'Enge Überwachung aller KI-Prompts — jede Ausgabe wird geprüft und muss freigegeben werden.',
+    target:null
+  },
+  {
+    id:'a-x2', title:'Pflicht-Dokumentation',
+    desc:'Verpflichtende, detaillierte Dokumentation jedes KI-Einsatzes nach festen Unternehmensvorlagen.',
+    target:null
+  },
+  {
+    id:'a-x3', title:'Sofort-Vollrollout',
+    desc:'Radikaler Umbruch über Nacht: Alle bisherigen Prozesse werden sofort durch KI ersetzt.',
+    target:null
+  },
+  {
+    id:'a-x4', title:'KI-Ergebnisse übernehmen',
+    desc:'KI-Ausgaben werden ungeprüft direkt in Entscheidungen und Berichte übernommen.',
+    target:null
+  },
+];
 
-// ─────────────────────────────────────────────
-// Logic
-// ─────────────────────────────────────────────
-function compute() {
-  const v = { ...BASE };
-  active.forEach(k => {
-    const d = DELTAS[k];
-    v.D += d.D; v.I += d.I; v.S += d.S; v.G += d.G;
-  });
-  return {
-    D: Math.min(100, Math.max(0, v.D)),
-    I: Math.min(100, Math.max(0, v.I)),
-    S: Math.min(100, Math.max(0, v.S)),
-    G: Math.min(100, Math.max(0, v.G))
-  };
+const EMPLOYEES = [
+  {
+    type:'D', name:'Alex M.', role:'Head of Operations', typeName:'Dominant', color:'#e74c3c',
+    status:'"Ich brauche keine KI — ich mache das selbst schneller und besser."',
+    ok:{ title:'Strategischer KI-Entscheider', text:'Alex übernimmt die Projektführung mit Bravour. Er nutzt KI als Entscheidungshebel, steigert den Team-ROI um 34 % und wird vom Skeptiker zum stärksten Befürworter der Transformation.' },
+    err:{ title:'Widerstand! D fühlt sich mikrogemanagt.', text:'Alex fühlt sich kontrolliert und übergangen. Er lehnt das Tool aktiv ab, spricht negativ im Management darüber — und gefährdet den gesamten Rollout.' }
+  },
+  {
+    type:'I', name:'Sarah K.', role:'Marketing Manager', typeName:'Initiativ', color:'#f1c40f',
+    status:'"Hört sich spannend an! Aber wie genau funktioniert das eigentlich nochmal?"',
+    ok:{ title:'Innovations-Treiberin', text:'Sarah entdeckt KI als ultimativen Kreativpartner. Sie überwindet die „leere Seite", generiert 12 neue Ideen pro Sprint und wird zur inoffiziellen KI-Botschafterin des Unternehmens.' },
+    err:{ title:'Motivation sinkt! I verliert die Lust am Tool.', text:'Bürokratie und starre Regeln töten Sarahs Energie sofort. Gedanklich ist sie schon beim nächsten Trend-Tool — die KI-Plattform nutzt sie kaum noch.' }
+  },
+  {
+    type:'S', name:'Thomas B.', role:'Process Analyst', typeName:'Stetig', color:'#2ecc71',
+    status:'"Wenn das meinen Job ersetzt, habe ich ein sehr ernstes Problem..."',
+    ok:{ title:'Experte für Prozess-Stabilität', text:'Thomas baut seine Ängste Schritt für Schritt ab. Mit Mentor-Support versteht er: KI stärkt ihn, ersetzt ihn nicht. Er wird zum verlässlichsten KI-Prozessexperten im Team.' },
+    err:{ title:'Überforderung! S blockiert die Neuerung komplett.', text:'Thomas ist überwältigt, zieht sich zurück und sucht still nach einem Transfer. Sein Schweigen wird zum unsichtbaren Risikofaktor für den Projektzeitplan.' }
+  },
+  {
+    type:'G', name:'Dr. Lisa W.', role:'Data Quality Lead', typeName:'Gewissenhaft', color:'#3498db',
+    status:'"Ich habe bereits 23 potenzielle Fehlerquellen in der KI-Architektur identifiziert."',
+    ok:{ title:'KI-Qualitätssicherungs-Expertin', text:'Dr. Lisa entwickelt die höchste KI-Kompetenz im Unternehmen. Als System-Validatorin stellt sie sicher, dass alle Outputs korrekt, unverzerrt und auditierbar sind — unersetzlich.' },
+    err:{ title:'Skepsis! G vertraut dem System nicht.', text:'Dr. Lisa erstellt einen 60-seitigen Fehlerbericht mit 47 dokumentierten Risiken und blockiert damit aktiv den unternehmensweiten Rollout auf Compliance-Ebene.' }
+  },
+];
+
+/* ═══════════════════════════════════════════════════════════════
+   STATE
+═══════════════════════════════════════════════════════════════ */
+let selected = null;           // action id currently selected
+let assignments = {};          // { type: actionId } — correct assignments only
+let correctCount = 0;
+let shuffled = [];
+
+function shuffle(arr){
+  const a=[...arr];
+  for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}
+  return a;
 }
 
-function refresh() {
-  const v = compute();
+/* ═══════════════════════════════════════════════════════════════
+   RENDER
+═══════════════════════════════════════════════════════════════ */
+function renderActions(){
+  const grid = document.getElementById('actions-grid');
+  grid.innerHTML = '';
+  shuffled.forEach(ac => {
+    const gone = Object.values(assignments).includes(ac.id);
+    const isSel = selected === ac.id;
 
-  // Update chart
-  chart.data.datasets[1].data = [v.D, v.I, v.S, v.G];
-  chart.update();
-
-  // Update value cards
-  [['D','d'],['I','i'],['S','s'],['G','g']].forEach(([K, id]) => {
-    const delta = v[K] - BASE[K];
-    document.getElementById('vn-' + id).textContent = v[K];
-    const el = document.getElementById('vd-' + id);
-    if (delta > 0) { el.textContent = '+' + delta + ' Pkt'; el.className = 'vc-delta delta-up'; }
-    else if (delta < 0) { el.textContent = delta + ' Pkt'; el.className = 'vc-delta delta-dn'; }
-    else { el.textContent = '—'; el.className = 'vc-delta delta-eq'; }
+    const el = document.createElement('div');
+    el.className = 'ac' + (gone?' gone':'') + (isSel?' selected':'');
+    el.dataset.id = ac.id;
+    el.draggable = !gone;
+    el.innerHTML = `
+      <div class="ac-badge">Management-Maßnahme</div>
+      <div class="ac-title">${ac.title}</div>
+      <div class="ac-desc">${ac.desc}</div>
+      <span class="ac-grip">⠿</span>
+    `;
+    if(!gone){
+      el.addEventListener('click', ()=>selectAction(ac.id, el));
+      el.addEventListener('dragstart', e=>{
+        e.dataTransfer.setData('text/plain', ac.id);
+        setTimeout(()=>el.classList.add('dragging'),0);
+        selected = ac.id;
+        updateEmpReady();
+      });
+      el.addEventListener('dragend', ()=>{
+        el.classList.remove('dragging');
+      });
+    }
+    grid.appendChild(el);
   });
-
-  // Update interpretation text
-  const arr = [...active].sort();
-  let key = 'none';
-  if (arr.length === 3) key = 'all';
-  else if (arr.length === 1) key = arr[0];
-  else if (arr.length === 2) {
-    const map = {
-      'analytik,generative': 'generative_analytik',
-      'automatisierung,generative': 'generative_automatisierung',
-      'analytik,automatisierung': 'automatisierung_analytik'
-    };
-    key = map[arr.join(',')] || 'none';
-  }
-  document.getElementById('interpretation-text').innerHTML = TEXTS[key] || TEXTS['none'];
 }
 
-// ─────────────────────────────────────────────
-// Event Binding
-// ─────────────────────────────────────────────
-['generative','automatisierung','analytik'].forEach(id => {
-  const card = document.getElementById('scen-' + id);
-  const cb   = document.getElementById('cb-' + id);
+function renderEmployees(){
+  const grid = document.getElementById('emp-grid');
+  grid.innerHTML = '';
+  EMPLOYEES.forEach(emp=>{
+    const assigned = assignments[emp.type];
+    const action = assigned ? ACTIONS.find(a=>a.id===assigned) : null;
+    const isReady = selected && !assigned;
+    const isDone = !!assigned;
 
-  card.addEventListener('click', (e) => {
-    // If click was directly on the checkbox, browser already toggled it
-    // If click was elsewhere, toggle it manually
-    if (e.target !== cb) cb.checked = !cb.checked;
+    const el = document.createElement('div');
+    el.className = 'ec'+(isDone?' done':'')+(isReady?' ready':'');
+    el.dataset.t = emp.type;
+    el.innerHTML = `
+      <div class="ec-head">
+        <div class="ec-av">
+          ${emp.type}
+          <div class="ec-av-check">✓</div>
+        </div>
+        <div>
+          <div class="ec-name">${emp.name}</div>
+          <div class="ec-role">${emp.role}</div>
+          <div class="ec-type">${emp.typeName}-Typ</div>
+        </div>
+      </div>
+      <div class="ec-body">
+        <div class="ec-status">${emp.status}</div>
+        <div class="dz${isDone?' dz-filled':''}" id="dz-${emp.type}">
+          ${isDone && action ? `
+            <div class="dz-result">
+              <div class="dz-r-head"><span class="dz-r-title">${action.title}</span></div>
+              <div class="dz-r-text">${emp.ok.text}</div>
+            </div>
+          ` : `
+            <div class="dz-ph">
+              <span class="dz-ph-icon">＋</span>
+              <span class="dz-ph-txt">Maßnahme zuordnen</span>
+            </div>
+          `}
+        </div>
+      </div>
+    `;
 
-    if (cb.checked) {
-      active.add(id);
-      card.classList.add('active');
-    } else {
-      active.delete(id);
-      card.classList.remove('active');
+    if(!isDone){
+      const dz = el.querySelector('.dz');
+      // Click to assign selected action
+      el.addEventListener('click', ()=>{ if(selected) tryAssign(selected, emp.type, el); });
+      // Drag and drop
+      dz.addEventListener('dragover', e=>{ e.preventDefault(); dz.classList.add('dz-active'); el.classList.add('dz-over'); });
+      dz.addEventListener('dragleave', ()=>{ dz.classList.remove('dz-active'); el.classList.remove('dz-over'); });
+      dz.addEventListener('drop', e=>{
+        e.preventDefault();
+        dz.classList.remove('dz-active'); el.classList.remove('dz-over');
+        const id = e.dataTransfer.getData('text/plain');
+        if(id) tryAssign(id, emp.type, el);
+      });
     }
-    refresh();
-  });
-});
 
-// ─────────────────────────────────────────────
-// Init
-// ─────────────────────────────────────────────
-refresh();
+    grid.appendChild(el);
+  });
+}
+
+function updateEmpReady(){
+  EMPLOYEES.forEach(emp=>{
+    const el = document.querySelector(`.ec[data-t="${emp.type}"]`);
+    if(!el) return;
+    if(selected && !assignments[emp.type]) el.classList.add('ready');
+    else el.classList.remove('ready');
+  });
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   GAME LOGIC
+═══════════════════════════════════════════════════════════════ */
+function selectAction(id, cardEl){
+  if(selected === id){
+    selected = null;
+  } else {
+    selected = id;
+  }
+  renderActions();
+  updateEmpReady();
+}
+
+function tryAssign(actionId, empType, empEl){
+  const action = ACTIONS.find(a=>a.id===actionId);
+  const emp = EMPLOYEES.find(e=>e.type===empType);
+  if(!action || !emp) return;
+
+  const correct = action.target === empType;
+
+  if(correct){
+    assignments[empType] = actionId;
+    correctCount++;
+    selected = null;
+
+    empEl.classList.add('pop');
+    setTimeout(()=>empEl.classList.remove('pop'), 600);
+
+    showFb(true,'✅', `Perfekt — ${emp.name} & „${action.title}"`, emp.ok.text);
+    renderActions();
+    renderEmployees();
+    updateProgress();
+
+    if(correctCount === 4) setTimeout(showSuccess, 900);
+  } else {
+    // Wrong
+    empEl.classList.add('shake');
+    setTimeout(()=>empEl.classList.remove('shake'), 500);
+
+    const acEl = document.querySelector(`.ac[data-id="${actionId}"]`);
+    if(acEl){ acEl.classList.add('wrong-flash'); setTimeout(()=>acEl.classList.remove('wrong-flash'),600); }
+
+    showFb(false,'⚠️', emp.err.title, emp.err.text);
+    selected = null;
+    renderActions();
+    updateEmpReady();
+  }
+}
+
+function showFb(ok, icon, title, msg){
+  const fb = document.getElementById('fb');
+  document.getElementById('fb-ico').textContent = icon;
+  document.getElementById('fb-ttl').textContent = title;
+  document.getElementById('fb-msg').textContent = msg;
+  fb.className = 'fb show '+(ok?'fb-ok':'fb-err');
+  clearTimeout(fb._t);
+  fb._t = setTimeout(()=>{ fb.classList.remove('show'); }, 6000);
+}
+
+function updateProgress(){
+  const pct = (correctCount/4)*100;
+  document.getElementById('prog-fill').style.width = pct+'%';
+  document.getElementById('prog-count').textContent = correctCount+' / 4';
+  EMPLOYEES.forEach(emp=>{
+    const dot = document.getElementById('pd-'+emp.type);
+    if(dot && assignments[emp.type]) dot.classList.add('done');
+  });
+}
+
+function showSuccess(){
+  // Build result rows
+  const rows = EMPLOYEES.map(emp=>`
+    <div class="res-row">
+      <div class="res-dot" style="background:${emp.color}"></div>
+      <div>
+        <div class="res-name">${emp.name} (${emp.typeName}) → ${emp.ok.title}</div>
+        <div class="res-text">${emp.ok.text}</div>
+      </div>
+    </div>
+  `).join('');
+  document.getElementById('succ-res-rows').innerHTML = rows;
+  document.getElementById('success').classList.add('show');
+}
+
+function resetGame(){
+  selected = null; assignments = {}; correctCount = 0;
+  shuffled = shuffle(ACTIONS);
+  document.getElementById('success').classList.remove('show');
+  document.getElementById('fb').classList.remove('show');
+  document.getElementById('prog-fill').style.width='0';
+  document.getElementById('prog-count').textContent='0 / 4';
+  EMPLOYEES.forEach(emp=>{ const d=document.getElementById('pd-'+emp.type); if(d) d.classList.remove('done'); });
+  renderActions();
+  renderEmployees();
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   INIT
+═══════════════════════════════════════════════════════════════ */
+shuffled = shuffle(ACTIONS);
+renderActions();
+renderEmployees();
 </script>
 </body>
 </html>
